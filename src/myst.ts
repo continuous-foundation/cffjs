@@ -62,9 +62,7 @@ export function frontmatterToReferenceCFF(
   let dateString: string | undefined;
   if (frontmatter.date) {
     const date = new Date(frontmatter.date);
-    dateString = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000)
-      .toISOString()
-      .split('T')[0];
+    dateString = new Date(date.getTime()).toISOString().split('T')[0];
   }
   const { title, authors } = frontmatter;
   if (!title) {
@@ -126,9 +124,7 @@ export function frontmatterToCFF(frontmatter: PageFrontmatter, abstract?: string
   let dateString: string | undefined;
   if (frontmatter.date) {
     const date = new Date(frontmatter.date);
-    dateString = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000)
-      .toISOString()
-      .split('T')[0];
+    dateString = new Date(date.getTime()).toISOString().split('T')[0];
   }
   const { title, authors } = frontmatter;
   if (!title) {
