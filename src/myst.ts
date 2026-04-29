@@ -2,10 +2,43 @@ import type { Affiliation, Contributor, PageFrontmatter } from 'myst-frontmatter
 import type { CFF, EntityCFF, PersonCFF, ReferenceCFF } from './types.js';
 import { ReferenceType } from './types.js';
 
+type LegacyBiblio = {
+  first_page?: string | number;
+  last_page?: string | number;
+  issue?: string | number;
+  volume?: string | number;
+};
+
+/**
+ * Normalize publication-related fields across myst-frontmatter versions.
+ *
+ * Older versions kept these under `frontmatter.biblio`; newer versions promote
+ * them to the top level and use `PublicationMeta` objects for `issue`/`volume`.
+ */
+function getPublicationFields(frontmatter: PageFrontmatter): LegacyBiblio {
+  const legacy = (frontmatter as PageFrontmatter & { biblio?: LegacyBiblio }).biblio;
+  if (legacy && typeof legacy === 'object') return legacy;
+  const flatten = (m: unknown): string | number | undefined => {
+    if (m == null) return undefined;
+    if (typeof m === 'string' || typeof m === 'number') return m;
+    if (typeof m === 'object') {
+      const meta = m as { number?: string | number; title?: string };
+      return meta.number ?? meta.title;
+    }
+    return undefined;
+  };
+  return {
+    first_page: frontmatter.first_page,
+    last_page: frontmatter.last_page,
+    issue: flatten(frontmatter.issue),
+    volume: flatten(frontmatter.volume),
+  };
+}
+
 /**
  * Convert MyST Contributor to CFF Person
  */
-export function authorToCFF(
+export function mystAuthorToCFF(
   author: Contributor,
   affiliations?: Affiliation[],
 ): PersonCFF | EntityCFF {
@@ -50,15 +83,15 @@ export function authorToCFF(
 /**
  * Convert MyST PageFrontmatter to CFF Reference
  */
-export function frontmatterToReferenceCFF(
+export function mystFrontmatterToCFFReference(
   frontmatter: PageFrontmatter,
   abstract?: string,
 ): ReferenceCFF {
-  const { first_page, last_page, issue, volume } = frontmatter.biblio ?? {};
+  const { first_page, last_page, issue, volume } = getPublicationFields(frontmatter);
   const license = frontmatter.license?.content ?? frontmatter.license?.code;
   const contact = frontmatter.authors
     ?.filter((author) => author.corresponding)
-    .map((author) => authorToCFF(author, frontmatter.affiliations));
+    .map((author) => mystAuthorToCFF(author, frontmatter.affiliations));
   let dateString: string | undefined;
   if (frontmatter.date) {
     const date = new Date(frontmatter.date);
@@ -75,7 +108,7 @@ export function frontmatterToReferenceCFF(
     type: ReferenceType.article,
     abstract,
     title,
-    authors: authors?.map((author) => authorToCFF(author, frontmatter.affiliations)),
+    authors: authors?.map((author) => mystAuthorToCFF(author, frontmatter.affiliations)),
     'date-released': dateString,
     contact: contact?.length ? contact : undefined,
     copyright: frontmatter.copyright,
@@ -91,7 +124,7 @@ export function frontmatterToReferenceCFF(
       ?.map((id) => {
         const editor = frontmatter.contributors?.find((contrib) => contrib.id === id);
         if (!editor) return undefined;
-        return authorToCFF(editor, frontmatter.affiliations);
+        return mystAuthorToCFF(editor, frontmatter.affiliations);
       })
       .filter((editor): editor is PersonCFF | EntityCFF => !!editor),
     end: typeof last_page === 'number' ? last_page : undefined,
@@ -116,11 +149,11 @@ export function frontmatterToReferenceCFF(
 /**
  * Convert MyST PageFrontmatter to CFF
  */
-export function frontmatterToCFF(frontmatter: PageFrontmatter, abstract?: string): CFF {
+export function mystFrontmatterToCFF(frontmatter: PageFrontmatter, abstract?: string): CFF {
   const license = frontmatter.license?.content ?? frontmatter.license?.code;
   const contact = frontmatter.authors
     ?.filter((author) => author.corresponding)
-    .map((author) => authorToCFF(author, frontmatter.affiliations));
+    .map((author) => mystAuthorToCFF(author, frontmatter.affiliations));
   let dateString: string | undefined;
   if (frontmatter.date) {
     const date = new Date(frontmatter.date);
@@ -138,7 +171,7 @@ export function frontmatterToCFF(frontmatter: PageFrontmatter, abstract?: string
     message: 'Please cite the following works when using this project.',
     abstract,
     title,
-    authors: authors?.map((author) => authorToCFF(author, frontmatter.affiliations)),
+    authors: authors?.map((author) => mystAuthorToCFF(author, frontmatter.affiliations)),
     'date-released': dateString,
     contact: contact?.length ? contact : undefined,
     identifiers: frontmatter.doi
@@ -155,4 +188,11 @@ export function frontmatterToCFF(frontmatter: PageFrontmatter, abstract?: string
     url: frontmatter.source,
     repository: frontmatter?.github,
   };
+}
+
+/**
+ * @deprecated Use `mystFrontmatterToCFF` instead.
+ */
+export function frontmatterToCFF(frontmatter: PageFrontmatter, abstract?: string): CFF {
+  return mystFrontmatterToCFF(frontmatter, abstract);
 }

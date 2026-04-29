@@ -17,14 +17,10 @@
     "skipLibCheck": true,
     "strict": true,
     "lib": ["es2021", "DOM"],
+    "rootDir": "./src",
     "outDir": "dist",
-    "typeRoots": [
-      "./types",
-      "./node_modules/@types",
-      "../../node_modules/@types",
-      "../../../node_modules/@types"
-    ]
+    "types": ["node"]
   },
-  "include": ["."],
+  "include": ["src"],
   "exclude": ["dist", "build", "node_modules", "src/**/*.spec.ts", "tests"]
 }
