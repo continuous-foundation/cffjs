@@ -1,6 +1,6 @@
 {
   "name": "cffjs",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Types and utilities for working with CITATION.cff files in Typescript",
   "author": "Rowan Cockett <rowan@continuousfoundation.org>",
   "homepage": "https://github.com/continuous-foundation/cffjs",
