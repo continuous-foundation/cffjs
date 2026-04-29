@@ -36,7 +36,7 @@
     "build": "bun run clean && bun run build:esm",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish && git push --follow-tags"
   },
   "bugs": {
     "url": "https://github.com/continuous-foundation/cffjs/issues"
